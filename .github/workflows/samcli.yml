@@ -1,7 +1,7 @@
 name: Deploy Serverless function
 on:
   push:
-    branches: [ "main-cli" ]
+    branches: ["main-cli"]
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -38,3 +38,17 @@ jobs:
               --resolve-s3 \
               --no-confirm-changeset \
               --no-fail-on-empty-changeset
+
+      - name: Upload incoming folder to S3
+        run: |
+          BUCKET_NAME=$(aws cloudformation describe-stacks \
+            --stack-name s3-grayscale \
+            --region us-east-1 \
+            --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' \
+            --output text)
+
+          echo "Uploading to bucket: $BUCKET_NAME"
+          aws s3 cp incoming/file_example.png s3://$BUCKET_NAME/incoming/file_example.png \
+            --region us-east-1
+
+          echo "Successfully uploaded file_example.png to s3://$BUCKET_NAME/incoming/"
